@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  }
+
+  [dir="rtl"] textarea,
+  [dir="rtl"] input {
+    text-align: right;
+  }
+}
+
+@layer utilities {
+  .arabic-text {
+    font-family: "Arabic Typesetting", "Amiri", "Traditional Arabic", serif;
+    font-size: 1.2rem;
+    line-height: 2;
+    direction: rtl;
+  }
+}

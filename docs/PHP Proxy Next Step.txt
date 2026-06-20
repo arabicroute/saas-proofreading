@@ -1,0 +1,7 @@
+Option 3: Replace Express With A PHP Backend
+
+Since Laragon already serves PHP naturally, move /api/cohere into PHP
+Then everything runs under the Laragon vhost directly
+No separate Node process needed
+This is the most "normal Laragon app" solution, but it means rewriting the proxy route.
+
