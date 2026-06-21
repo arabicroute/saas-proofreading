@@ -42,6 +42,20 @@ export const PRODUCTION_DEFAULTS: FeatureConfig = {
   thinkingDisabled: true,
 };
 
+// Fields a production-tier user may still adjust.
+// Everything else stays locked to the production defaults.
+export const PRODUCTION_EDITABLE_FIELDS: ReadonlyArray<keyof FeatureConfig> = [
+  "customInstructions",
+  "customInstructionsMode",
+];
+
+export function isFeatureConfigFieldEditable(
+  tier: FeatureConfig["tier"],
+  field: keyof FeatureConfig
+): boolean {
+  return tier !== "production" || PRODUCTION_EDITABLE_FIELDS.includes(field);
+}
+
 export const AVAILABLE_MODELS: Array<{ id: FeatureConfig["modelId"]; label: string }> = [
   { id: "command-r7b-arabic-02-2025", label: "Command R7B Arabic (default)" },
   { id: "command-a-plus-05-2026",     label: "Command A+ (May 2026)"        },

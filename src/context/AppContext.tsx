@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer, type Dispatch } from "rea
 import type { FeatureConfig } from "../types/featureConfig";
 import type { MergedResult } from "../types/recommendation";
 import type { ChunkProgress } from "../lib/proofreadingSession";
-import { TESTING_DEFAULTS } from "../config/featureConfig";
+import { TESTING_DEFAULTS, isFeatureConfigFieldEditable } from "../config/featureConfig";
 
 export type AppTab = "config" | "input" | "output" | "playground";
 
@@ -45,8 +45,28 @@ function reducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case "SET_API_KEY":
       return { ...state, apiKey: action.key };
-    case "SET_CFG":
+    case "SET_CFG": {
+      // Tier switches must always be allowed so the app can move in and out
+      // of the locked production preset.
+      if (action.cfg.tier) {
+        return { ...state, cfg: { ...state.cfg, ...action.cfg } };
+      }
+
+      if (state.cfg.tier === "production") {
+        const filtered: Partial<FeatureConfig> = {};
+        const assignable = filtered as Record<keyof FeatureConfig, FeatureConfig[keyof FeatureConfig] | undefined>;
+
+        for (const key of Object.keys(action.cfg) as Array<keyof FeatureConfig>) {
+          if (isFeatureConfigFieldEditable(state.cfg.tier, key)) {
+            assignable[key] = action.cfg[key];
+          }
+        }
+
+        return { ...state, cfg: { ...state.cfg, ...filtered } };
+      }
+
       return { ...state, cfg: { ...state.cfg, ...action.cfg } };
+    }
     case "SET_INPUT":
       return { ...state, inputText: action.text, inputFileName: action.fileName ?? "" };
     case "SESSION_START":
