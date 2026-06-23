@@ -31,6 +31,8 @@ export type PanelId =
   | "panel-instructions"
   | "panel-usage"
   | "panel-debug-connection"
+  | "panel-default-api-key"
+  | "panel-locale"
   | "panel-stats"
   | "panel-clean-results"
   | "panel-flagged-results";

@@ -4,6 +4,7 @@ import { ConfigTab } from "./components/tabs/ConfigTab";
 import { InputTab } from "./components/tabs/InputTab";
 import { OutputTab } from "./components/tabs/OutputTab";
 import { PlaygroundTab } from "./components/tabs/PlaygroundTab";
+import { AppConfigTab } from "./components/tabs/AppConfigTab";
 import { UiTab } from "./components/tabs/UiTab";
 import { CLS, DATA, IDS } from "./lib/uiSelectors";
 
@@ -12,11 +13,12 @@ const IS_DEV = import.meta.env.DEV;
 type DisplayTab = AppTab | "appearance";
 
 const TABS: Array<{ id: DisplayTab; label: string; devOnly?: boolean }> = [
-  { id: "config", label: "⚙ Config" },
+  { id: "ai-config", label: "⚙ AI Config" },
   { id: "input", label: "✏ Input" },
   { id: "output", label: "📄 Output" },
-  { id: "appearance", label: "🎨 Appearance", devOnly: true },
   { id: "playground", label: "🛠 Playground", devOnly: true },
+  { id: "appearance", label: "🎨 Appearance", devOnly: true },
+  { id: "app-config", label: "🔧 App Config" },
 ];
 
 function Shell() {
@@ -110,11 +112,12 @@ function Shell() {
           role="tabpanel"
           aria-labelledby={IDS.tabButton(displayTab)}
         >
-          {displayTab === "config" && <ConfigTab />}
+          {displayTab === "ai-config" && <ConfigTab />}
           {displayTab === "input" && <InputTab />}
           {displayTab === "output" && <OutputTab />}
-          {displayTab === "appearance" && IS_DEV && <UiTab />}
           {displayTab === "playground" && IS_DEV && <PlaygroundTab />}
+          {displayTab === "appearance" && IS_DEV && <UiTab />}
+          {displayTab === "app-config" && <AppConfigTab />}
         </div>
       </div>
     </div>

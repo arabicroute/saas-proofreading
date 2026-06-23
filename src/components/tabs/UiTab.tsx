@@ -10,17 +10,21 @@ const DIR_OPTIONS: Array<{ id: UiDirOverride; label: string }> = [
 ];
 
 const OVERRIDEABLE_TABS: Array<{ id: AppTab; label: string }> = [
-  { id: "config", label: "Config" },
+  { id: "ai-config", label: "AI Config" },
   { id: "input", label: "Input" },
   { id: "output", label: "Output" },
+  { id: "app-config", label: "App Config" },
 ];
 
 export function UiTab() {
   const { ui } = useAppState();
   const dispatch = useAppDispatch();
 
-  const configPanels = (Object.entries(ui.panels) as [PanelId, (typeof ui.panels)[PanelId]][]).filter(
-    ([, panel]) => panel.tab === "config"
+  const aiConfigPanels = (Object.entries(ui.panels) as [PanelId, (typeof ui.panels)[PanelId]][]).filter(
+    ([, panel]) => panel.tab === "ai-config"
+  );
+  const appConfigPanels = (Object.entries(ui.panels) as [PanelId, (typeof ui.panels)[PanelId]][]).filter(
+    ([, panel]) => panel.tab === "app-config"
   );
   const outputPanels = (Object.entries(ui.panels) as [PanelId, (typeof ui.panels)[PanelId]][]).filter(
     ([, panel]) => panel.tab === "output"
@@ -130,9 +134,21 @@ export function UiTab() {
         <h3 className="settings-card__heading">
           <span aria-hidden="true">👁 </span>Panel Visibility
         </h3>
-        <p className="field-label mb-2">Config tab</p>
+        <p className="field-label mb-2">AI Config tab</p>
         <div className="mb-4 space-y-2">
-          {configPanels.map(([panelId, panel]) => (
+          {aiConfigPanels.map(([panelId, panel]) => (
+            <PanelToggleRow
+              key={panelId}
+              label={panel.label}
+              hidden={panel.hidden}
+              onToggle={(hidden) => dispatch({ type: "SET_PANEL_HIDDEN", panelId, hidden })}
+            />
+          ))}
+        </div>
+
+        <p className="field-label mb-2">App Config tab</p>
+        <div className="mb-4 space-y-2">
+          {appConfigPanels.map(([panelId, panel]) => (
             <PanelToggleRow
               key={panelId}
               label={panel.label}

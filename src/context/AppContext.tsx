@@ -5,11 +5,16 @@ import type { ChunkProgress } from "../lib/proofreadingSession";
 import { TESTING_DEFAULTS, isFeatureConfigFieldEditable } from "../config/featureConfig";
 import { UI_DEFAULTS, loadStoredUiPrefs, saveUiPrefs } from "../config/uiConfig";
 import type { PanelId, UiDirOverride, UiState } from "../types/uiConfig";
+import type { AppConfig, KeySlot } from "../types/appConfig";
+import { APP_CONFIG } from "../config/appConfig";
+import { getKeyBySlot, resolveInitialApiKey, resolveInitialKeySlot } from "../lib/apiKeys";
 
-export type AppTab = "config" | "input" | "output" | "playground";
+export type AppTab = "ai-config" | "input" | "output" | "playground" | "app-config";
 
 export interface AppState {
   apiKey: string;
+  selectedKeySlot: KeySlot | null;
+  appConfig: AppConfig;
   cfg: FeatureConfig;
   inputText: string;
   inputFileName: string;
@@ -24,6 +29,8 @@ export interface AppState {
 
 export type AppAction =
   | { type: "SET_API_KEY"; key: string }
+  | { type: "SELECT_KEY_SLOT"; slot: KeySlot }
+  | { type: "SET_APP_CONFIG_DEFAULT_SLOT"; slot: KeySlot }
   | { type: "SET_CFG"; cfg: Partial<FeatureConfig> }
   | { type: "SET_INPUT"; text: string; fileName?: string }
   | { type: "SESSION_START" }
@@ -42,7 +49,21 @@ export type AppAction =
 function reducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case "SET_API_KEY":
-      return { ...state, apiKey: action.key };
+      return { ...state, apiKey: action.key, selectedKeySlot: null };
+    case "SELECT_KEY_SLOT": {
+      const option = getKeyBySlot(action.slot);
+      if (!option) return state;
+      return { ...state, apiKey: option.value, selectedKeySlot: option.slot };
+    }
+    case "SET_APP_CONFIG_DEFAULT_SLOT": {
+      const option = getKeyBySlot(action.slot);
+      return {
+        ...state,
+        appConfig: { ...state.appConfig, defaultKeySlot: action.slot },
+        selectedKeySlot: action.slot,
+        apiKey: option ? option.value : state.apiKey,
+      };
+    }
     case "SET_CFG": {
       // Tier switches must always be allowed so the app can move in and out
       // of the locked production preset.
@@ -118,7 +139,9 @@ function reducer(state: AppState, action: AppAction): AppState {
 }
 
 const initialState: AppState = {
-  apiKey: import.meta.env.VITE_COHERE_API_KEY ?? "",
+  apiKey: resolveInitialApiKey(APP_CONFIG.defaultKeySlot),
+  selectedKeySlot: resolveInitialKeySlot(APP_CONFIG.defaultKeySlot),
+  appConfig: APP_CONFIG,
   cfg: TESTING_DEFAULTS,
   inputText: "",
   inputFileName: "",
@@ -126,7 +149,7 @@ const initialState: AppState = {
   progress: [],
   result: null,
   sessionError: "",
-  activeTab: "config",
+  activeTab: "ai-config",
   promptOverride: undefined,
   ui: loadStoredUiPrefs(),
 };

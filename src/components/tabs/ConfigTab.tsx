@@ -8,12 +8,14 @@ import {
 import { ConnectionPanel } from "../shared/ConnectionPanel";
 import { UsageMonitor } from "../shared/UsageMonitor";
 import type { CustomInstructionsMode, FeatureConfig } from "../../types/featureConfig";
+import type { KeySlot } from "../../types/appConfig";
 import { CLS, DATA, IDS } from "../../lib/uiSelectors";
+import { KEY_OPTIONS } from "../../lib/apiKeys";
 
 export function ConfigTab() {
   const state = useAppState();
   const dispatch = useAppDispatch();
-  const { cfg, apiKey, ui } = state;
+  const { appConfig, cfg, selectedKeySlot, ui } = state;
 
   const set = (patch: Partial<FeatureConfig>) => dispatch({ type: "SET_CFG", cfg: patch });
   const isLocked = (field: keyof FeatureConfig) => !isFeatureConfigFieldEditable(cfg.tier, field);
@@ -28,6 +30,12 @@ export function ConfigTab() {
     ...DATA.panelHidden(ui.panels[panelId]?.hidden ?? false),
   });
 
+  const hasClientKeys = KEY_OPTIONS.length > 0;
+  const activeKeyLabel =
+    selectedKeySlot !== null
+      ? KEY_OPTIONS.find((option) => option.slot === selectedKeySlot)?.label ?? `Key ${selectedKeySlot}`
+      : null;
+
   return (
     <div className="space-y-4">
       <div id={IDS.settingsCard("api-key")} className={CLS.settingsCard} {...panelProps("panel-api-key")}>
@@ -38,13 +46,45 @@ export function ConfigTab() {
           Preferred: set <code>COHERE_API_KEY</code> on the local proxy. This field is a
           client-side fallback for dev/testing only.
         </p>
-        <input
-          type="password"
-          value={apiKey}
-          onChange={(e) => dispatch({ type: "SET_API_KEY", key: e.target.value })}
-          placeholder="co-..."
-          className={CLS.fieldInput}
-        />
+        {hasClientKeys ? (
+          <>
+            <select
+              value={selectedKeySlot ?? ""}
+              onChange={(e) => {
+                const slot = Number(e.target.value);
+                if (!slot) return;
+                dispatch({ type: "SELECT_KEY_SLOT", slot: slot as KeySlot });
+              }}
+              className={CLS.fieldSelect}
+              aria-label="Select API key"
+            >
+              <option value="" disabled>
+                Select API key
+              </option>
+              {KEY_OPTIONS.map((option) => (
+                <option key={option.slot} value={option.slot}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {activeKeyLabel && (
+              <p className={`${CLS.fieldCaption} mt-2 text-green-700`}>
+                Active client key: {activeKeyLabel}
+              </p>
+            )}
+            {selectedKeySlot !== null && selectedKeySlot !== appConfig.defaultKeySlot && (
+              <p className={`${CLS.fieldCaption} mt-1 text-amber-700`}>
+                Default slot is {appConfig.defaultKeySlot}. This AI Config selection only overrides
+                the current session.
+              </p>
+            )}
+          </>
+        ) : (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500">
+            No client-side API keys are configured. The app will continue using the local proxy
+            key when available.
+          </div>
+        )}
       </div>
 
       <ConnectionPanel />
