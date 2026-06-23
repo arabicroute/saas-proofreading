@@ -1,18 +1,19 @@
-import { useAppState, useAppDispatch } from "../../context/AppContext";
+import { useAppDispatch, useAppState } from "../../context/AppContext";
 import {
-  TESTING_DEFAULTS,
-  PRODUCTION_DEFAULTS,
   AVAILABLE_MODELS,
+  PRODUCTION_DEFAULTS,
+  TESTING_DEFAULTS,
   isFeatureConfigFieldEditable,
 } from "../../config/featureConfig";
 import { ConnectionPanel } from "../shared/ConnectionPanel";
 import { UsageMonitor } from "../shared/UsageMonitor";
-import type { FeatureConfig, CustomInstructionsMode } from "../../types/featureConfig";
+import type { CustomInstructionsMode, FeatureConfig } from "../../types/featureConfig";
+import { CLS, DATA, IDS } from "../../lib/uiSelectors";
 
 export function ConfigTab() {
-  const state    = useAppState();
+  const state = useAppState();
   const dispatch = useAppDispatch();
-  const { cfg, apiKey } = state;
+  const { cfg, apiKey, ui } = state;
 
   const set = (patch: Partial<FeatureConfig>) => dispatch({ type: "SET_CFG", cfg: patch });
   const isLocked = (field: keyof FeatureConfig) => !isFeatureConfigFieldEditable(cfg.tier, field);
@@ -22,39 +23,44 @@ export function ConfigTab() {
     dispatch({ type: "SET_CFG", cfg: defaults });
   };
 
+  const panelProps = (panelId: Parameters<typeof DATA.panelId>[0]) => ({
+    ...DATA.panelId(panelId),
+    ...DATA.panelHidden(ui.panels[panelId]?.hidden ?? false),
+  });
+
   return (
     <div className="space-y-4">
-
-      {/* API Key */}
-      <div className="rounded-xl bg-white p-5 shadow-sm">
-        <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">🔑 API Key</h3>
-        <p className="text-xs text-red-500 mb-2">
-          ⚠ Preferred: set `COHERE_API_KEY` on the local proxy. This field is now only a client-side fallback for dev/testing.
+      <div id={IDS.settingsCard("api-key")} className={CLS.settingsCard} {...panelProps("panel-api-key")}>
+        <h3 className="settings-card__heading">
+          <span aria-hidden="true">🔑 </span>API Key
+        </h3>
+        <p className={`${CLS.fieldCaption} mb-2 text-red-500`}>
+          Preferred: set <code>COHERE_API_KEY</code> on the local proxy. This field is a
+          client-side fallback for dev/testing only.
         </p>
         <input
           type="password"
           value={apiKey}
-          onChange={e => dispatch({ type: "SET_API_KEY", key: e.target.value })}
+          onChange={(e) => dispatch({ type: "SET_API_KEY", key: e.target.value })}
           placeholder="co-..."
-          className="w-full border rounded-lg px-3 py-2 text-sm outline-none
-                     focus:border-[#1c2b4a] transition-colors"
+          className={CLS.fieldInput}
         />
       </div>
 
       <ConnectionPanel />
 
-      {/* Tier toggle */}
-      <div className="rounded-xl bg-white p-5 shadow-sm">
-        <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">⚙ Plan Tier</h3>
-        <div className="flex gap-3">
-          {(["testing", "production"] as const).map(tier => (
+      <div id={IDS.settingsCard("tier")} className={CLS.settingsCard} {...panelProps("panel-tier")}>
+        <h3 className="settings-card__heading">
+          <span aria-hidden="true">⚙ </span>Plan Tier
+        </h3>
+        <div className={CLS.segmentGroup}>
+          {(["testing", "production"] as const).map((tier) => (
             <button
               key={tier}
+              className={CLS.segmentButton}
+              {...DATA.selected(cfg.tier === tier)}
               onClick={() => switchTier(tier)}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors
-                ${cfg.tier === tier
-                  ? "bg-[#1c2b4a] text-white border-[#1c2b4a]"
-                  : "bg-white text-gray-600 border-gray-300 hover:border-[#1c2b4a]"}`}
+              type="button"
             >
               {tier === "testing" ? "🔬 Testing" : "🚀 Production"}
             </button>
@@ -62,168 +68,211 @@ export function ConfigTab() {
         </div>
         {cfg.tier === "production" && (
           <div className="mt-2 space-y-1">
-            <p className="text-xs text-amber-600">
-              ⚠ Command A+ production access requires contacting Cohere sales — it is not self-serve.
+            <p className={`${CLS.fieldCaption} text-amber-600`}>
+              Command A+ production access requires contacting Cohere sales. It is not self-serve.
             </p>
-            <p className="text-xs text-amber-600">
+            <p className={`${CLS.fieldCaption} text-amber-600`}>
               Locked in Production: switch to Testing to adjust advanced runtime settings.
             </p>
           </div>
         )}
       </div>
 
-      {/* Model selection */}
-      <div className="rounded-xl bg-white p-5 shadow-sm">
-        <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">🤖 Model</h3>
+      <div id={IDS.settingsCard("model")} className={CLS.settingsCard} {...panelProps("panel-model")}>
+        <h3 className="settings-card__heading">
+          <span aria-hidden="true">🤖 </span>Model
+        </h3>
         <select
           value={cfg.modelId}
           disabled={isLocked("modelId")}
-          onChange={e => set({ modelId: e.target.value as FeatureConfig["modelId"] })}
-          className={`w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1c2b4a]
-            ${isLocked("modelId") ? "opacity-50 cursor-not-allowed bg-gray-50" : ""}`}
+          onChange={(e) => set({ modelId: e.target.value as FeatureConfig["modelId"] })}
+          className={`${CLS.fieldSelect} ${isLocked("modelId") ? "cursor-not-allowed bg-gray-50 opacity-50" : ""}`}
         >
-          {AVAILABLE_MODELS.map(m => (
-            <option key={m.id} value={m.id}>{m.label}</option>
+          {AVAILABLE_MODELS.map((model) => (
+            <option key={model.id} value={model.id}>
+              {model.label}
+            </option>
           ))}
         </select>
       </div>
 
-      {/* Inference params */}
-      <div className="rounded-xl bg-white p-5 shadow-sm">
-        <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">🌡 Inference Parameters</h3>
+      <div
+        id={IDS.settingsCard("inference")}
+        className={CLS.settingsCard}
+        {...panelProps("panel-inference")}
+      >
+        <h3 className="settings-card__heading">
+          <span aria-hidden="true">🌡 </span>Inference Parameters
+        </h3>
         <div className="space-y-4">
-          {/* Temperature */}
           <div>
-            <div className="flex justify-between text-sm mb-1">
-              <label className="font-semibold text-gray-600">Temperature</label>
-              <span className="font-bold text-[#1c2b4a]">{cfg.temperature.toFixed(2)}</span>
+            <div className="mb-1 flex justify-between">
+              <label htmlFor="param-temperature" className={CLS.fieldLabel}>
+                Temperature
+              </label>
+              <span className="text-sm font-bold text-[--color-brand-900]">{cfg.temperature.toFixed(2)}</span>
             </div>
-            <p className="text-xs text-gray-400 mb-1">
-              Note: values below 0.4 have been empirically observed to produce degraded output with this model.
+            <p className={CLS.fieldCaption}>
+              Values below 0.4 have been empirically observed to degrade output with this model.
               Re-verify before lowering.
             </p>
             <input
-              type="range" min={0} max={1} step={0.05} value={cfg.temperature}
+              id="param-temperature"
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={cfg.temperature}
               disabled={isLocked("temperature")}
-              onChange={e => set({ temperature: Number(e.target.value) })}
-              className={`w-full accent-[#1c2b4a] ${isLocked("temperature") ? "opacity-40 cursor-not-allowed" : ""}`}
+              onChange={(e) => set({ temperature: Number(e.target.value) })}
+              className={`${CLS.fieldRange} mt-1 ${isLocked("temperature") ? "cursor-not-allowed opacity-40" : ""}`}
             />
           </div>
-          {/* Seed */}
+
           <div>
-            <div className="flex justify-between text-sm mb-1">
-              <label className="font-semibold text-gray-600">Seed</label>
-              <span className="font-bold text-[#1c2b4a]">{cfg.seed}</span>
+            <div className="mb-1 flex justify-between">
+              <label htmlFor="param-seed" className={CLS.fieldLabel}>
+                Seed
+              </label>
+              <span className="text-sm font-bold text-[--color-brand-900]">{cfg.seed}</span>
             </div>
             <input
+              id="param-seed"
+              type="number"
+              value={cfg.seed}
               disabled={isLocked("seed")}
-              type="number" value={cfg.seed}
-              onChange={e => set({ seed: parseInt(e.target.value, 10) || 42 })}
-              className={`w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1c2b4a]
-                ${isLocked("seed") ? "opacity-50 cursor-not-allowed bg-gray-50" : ""}`}
+              onChange={(e) => set({ seed: parseInt(e.target.value, 10) || 42 })}
+              className={`${CLS.fieldInput} ${isLocked("seed") ? "cursor-not-allowed bg-gray-50 opacity-50" : ""}`}
             />
           </div>
-          {/* Thinking toggle */}
+
           <div>
-            <div className="flex justify-between text-sm mb-1">
-              <label className="font-semibold text-gray-600">Thinking</label>
-              <span className="font-bold text-[#1c2b4a]">
+            <div className="mb-1 flex justify-between">
+              <p className={CLS.fieldLabel}>Thinking</p>
+              <span className="text-sm font-bold text-[--color-brand-900]">
                 {cfg.thinkingDisabled ? "Disabled" : "Enabled"}
               </span>
             </div>
-            <label className={`flex items-center gap-3 ${isLocked("thinkingDisabled") ? "cursor-not-allowed" : "cursor-pointer"}`}>
-              <div
-                onClick={() => {
-                  if (isLocked("thinkingDisabled")) return;
-                  set({ thinkingDisabled: !cfg.thinkingDisabled });
-                }}
-                className={`w-11 h-6 rounded-full transition-colors cursor-pointer relative
-                  ${cfg.thinkingDisabled ? "bg-[#1c2b4a]" : "bg-gray-300"}
-                  ${isLocked("thinkingDisabled") ? "opacity-50 cursor-not-allowed" : ""}`}
-              >
-                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all
-                  ${cfg.thinkingDisabled ? "left-6" : "left-1"}`} />
-              </div>
+            <button
+              role="switch"
+              aria-checked={!cfg.thinkingDisabled}
+              aria-label="Toggle model thinking"
+              {...DATA.checked(!cfg.thinkingDisabled)}
+              className={`${CLS.toggleSwitch} ${isLocked("thinkingDisabled") ? "cursor-not-allowed opacity-50" : ""}`}
+              onClick={() => {
+                if (isLocked("thinkingDisabled")) return;
+                set({ thinkingDisabled: !cfg.thinkingDisabled });
+              }}
+              disabled={isLocked("thinkingDisabled")}
+              type="button"
+            >
+              <span className={CLS.toggleSwitchTrack}>
+                <span className={CLS.toggleSwitchThumb} />
+              </span>
               <span className="text-sm font-semibold text-gray-700">
                 {cfg.thinkingDisabled ? "Send thinking: disabled" : "Allow model thinking"}
               </span>
-            </label>
-            <p className="text-xs text-gray-400 mt-2">
-              This setting is sent to the model and is now also honored by the connection test.
+            </button>
+            <p className={CLS.fieldCaption}>
+              This setting is sent to the model and is also honored by the connection test.
             </p>
           </div>
-          {/* Max chunk chars */}
+
           <div>
-            <div className="flex justify-between text-sm mb-1">
-              <label className="font-semibold text-gray-600">Max Chunk Characters</label>
-              <span className="font-bold text-[#1c2b4a]">{cfg.maxChunkChars.toLocaleString()}</span>
+            <div className="mb-1 flex justify-between">
+              <label htmlFor="param-chunk" className={CLS.fieldLabel}>
+                Max Chunk Characters
+              </label>
+              <span className="text-sm font-bold text-[--color-brand-900]">
+                {cfg.maxChunkChars.toLocaleString()}
+              </span>
             </div>
             <input
-              type="range" min={500} max={8000} step={100} value={cfg.maxChunkChars}
+              id="param-chunk"
+              type="range"
+              min={500}
+              max={8000}
+              step={100}
+              value={cfg.maxChunkChars}
               disabled={isLocked("maxChunkChars")}
-              onChange={e => set({ maxChunkChars: Number(e.target.value) })}
-              className={`w-full accent-[#1c2b4a] ${isLocked("maxChunkChars") ? "opacity-40 cursor-not-allowed" : ""}`}
+              onChange={(e) => set({ maxChunkChars: Number(e.target.value) })}
+              className={`${CLS.fieldRange} ${isLocked("maxChunkChars") ? "cursor-not-allowed opacity-40" : ""}`}
             />
           </div>
         </div>
       </div>
 
-      {/* Multi-turn toggle */}
-      <div className="rounded-xl bg-white p-5 shadow-sm">
-        <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">🔄 Multi-Turn Chunking</h3>
-        <label className={`flex items-center gap-3 ${isLocked("multiTurn") ? "cursor-not-allowed" : "cursor-pointer"}`}>
-          <div
-            onClick={() => {
-              if (isLocked("multiTurn")) return;
-              set({ multiTurn: !cfg.multiTurn });
-            }}
-            className={`w-11 h-6 rounded-full transition-colors cursor-pointer relative
-              ${cfg.multiTurn ? "bg-[#1c2b4a]" : "bg-gray-300"}
-              ${isLocked("multiTurn") ? "opacity-50 cursor-not-allowed" : ""}`}
-          >
-            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all
-              ${cfg.multiTurn ? "left-6" : "left-1"}`} />
-          </div>
-          <span className="text-sm font-semibold text-gray-700">
-            {cfg.multiTurn ? "Multi-turn (chunks as conversation turns)" : "Stateless (independent calls per chunk)"}
+      <div
+        id={IDS.settingsCard("multiturn")}
+        className={CLS.settingsCardCompact}
+        {...panelProps("panel-multiturn")}
+      >
+        <h3 className="settings-card__heading">
+          <span aria-hidden="true">🔄 </span>Multi-Turn Chunking
+        </h3>
+        <button
+          role="switch"
+          aria-checked={cfg.multiTurn}
+          aria-label="Toggle multi-turn chunking"
+          {...DATA.checked(cfg.multiTurn)}
+          className={`${CLS.toggleSwitch} ${isLocked("multiTurn") ? "cursor-not-allowed opacity-50" : ""}`}
+          onClick={() => {
+            if (isLocked("multiTurn")) return;
+            set({ multiTurn: !cfg.multiTurn });
+          }}
+          disabled={isLocked("multiTurn")}
+          type="button"
+        >
+          <span className={CLS.toggleSwitchTrack}>
+            <span className={CLS.toggleSwitchThumb} />
           </span>
-        </label>
-        <p className="text-xs text-gray-400 mt-2">
-          Multi-turn sends the system prompt once and appends chunks. Stateless re-sends the full system prompt per chunk.
+          <span className="text-sm font-semibold text-gray-700">
+            {cfg.multiTurn
+              ? "Multi-turn (chunks as conversation turns)"
+              : "Stateless (independent calls per chunk)"}
+          </span>
+        </button>
+        <p className={CLS.fieldCaption}>
+          Multi-turn sends the system prompt once and appends chunks. Stateless re-sends the
+          full system prompt per chunk.
         </p>
       </div>
 
-      {/* Custom instructions */}
-      <div className="rounded-xl bg-white p-5 shadow-sm">
-        <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">📋 Custom Instructions</h3>
-        <div className="flex gap-2 mb-3">
-          {(["none", "additive", "override"] as CustomInstructionsMode[]).map(mode => (
+      <div
+        id={IDS.settingsCard("instructions")}
+        className={CLS.settingsCard}
+        {...panelProps("panel-instructions")}
+      >
+        <h3 className="settings-card__heading">
+          <span aria-hidden="true">📋 </span>Custom Instructions
+        </h3>
+        <div className={`${CLS.segmentGroup} mb-3`}>
+          {(["none", "additive", "override"] as CustomInstructionsMode[]).map((mode) => (
             <button
               key={mode}
+              className={CLS.segmentButton}
+              {...DATA.selected(cfg.customInstructionsMode === mode)}
               onClick={() => set({ customInstructionsMode: mode })}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-colors
-                ${cfg.customInstructionsMode === mode
-                  ? "bg-[#1c2b4a] text-white border-[#1c2b4a]"
-                  : "bg-white text-gray-500 border-gray-300 hover:border-gray-400"}`}
+              type="button"
             >
               {mode === "none" ? "None" : mode === "additive" ? "Additive" : "Override"}
             </button>
           ))}
         </div>
         {cfg.customInstructionsMode === "override" && (
-          <p className="text-xs text-amber-600 mb-2">
-            Override replaces editorial preferences only — structural output rules are always enforced.
+          <p className={`${CLS.fieldCaption} mb-2 text-amber-600`}>
+            Override replaces editorial preferences only. Structural output rules are always
+            enforced.
           </p>
         )}
         {cfg.customInstructionsMode !== "none" && (
           <textarea
             dir="rtl"
             value={cfg.customInstructions}
-            onChange={e => set({ customInstructions: e.target.value })}
+            onChange={(e) => set({ customInstructions: e.target.value })}
             rows={4}
             placeholder="أدخل تعليمات إضافية هنا…"
-            className="w-full border rounded-lg px-3 py-2 text-sm outline-none
-                       focus:border-[#1c2b4a] arabic-text resize-y"
+            className={`${CLS.fieldTextarea} arabic-text resize-y`}
           />
         )}
       </div>

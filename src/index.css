@@ -1,21 +1,470 @@
+
+/* src/index.css — Tailwind v4 */
+
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────────
+   DESIGN TOKENS (@theme)
+   These become CSS custom properties AND Tailwind utility names.
+   e.g. --color-brand-900 → text-brand-900 / bg-brand-900
+
+   Skin overrides work by re-declaring these vars under
+   [data-skin="warm"] { } etc. in the Skin Overrides section.
+───────────────────────────────────────────────────────────────── */
+@theme {
+  /* Brand palette — default (navy) */
+  --color-brand-900:  #1c2b4a;   /* primary action, active tab */
+  --color-brand-800:  #2d3f6b;   /* hover state */
+  --color-brand-100:  #e8ecf4;   /* very light tint for backgrounds */
+
+  /* Semantic surface colours */
+  --color-surface:      #ffffff;
+  --color-surface-soft: #f3f4f6;   /* bg-gray-100 equivalent */
+  --color-border:       #e5e7eb;   /* gray-200 */
+  --color-border-focus: var(--color-brand-900);
+
+  /* Status colours */
+  --color-warn-bg:      #fffbeb;   /* amber-50 */
+  --color-warn-border:  #fcd34d;   /* amber-300 */
+  --color-warn-text:    #92400e;   /* amber-800 */
+  --color-error-bg:     #fef2f2;   /* red-50 */
+  --color-error-border: #fca5a5;   /* red-300 */
+  --color-error-text:   #dc2626;   /* red-600 */
+  --color-ok-bg:        #f0fdf4;   /* green-50 */
+  --color-ok-border:    #86efac;   /* green-300 */
+  --color-ok-text:      #166534;   /* green-800 */
+
+  /* Typography */
+  --font-sans:   "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-arabic: "Arabic Typesetting", "Amiri", "Traditional Arabic", serif;
+
+  /* Spacing rhythm */
+  --card-padding-default: 1.25rem;   /* p-5 */
+  --card-padding-compact: 0.75rem;   /* p-3 */
+  --card-radius:          0.75rem;   /* rounded-xl */
+  --card-shadow:          0 1px 3px 0 rgb(0 0 0 / 0.07),
+                          0 1px 2px -1px rgb(0 0 0 / 0.07);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   SKIN OVERRIDES
+   Applied via data-skin attribute on #app-shell.
+   Each skin only needs to override the tokens that differ.
+───────────────────────────────────────────────────────────────── */
+[data-skin="warm"] {
+  --color-brand-900: #4a3828;
+  --color-brand-800: #5e4a36;
+  --color-brand-100: #f5efe9;
+}
+
+[data-skin="high-contrast"] {
+  --color-brand-900: #000000;
+  --color-brand-800: #1a1a1a;
+  --color-brand-100: #f0f0f0;
+  --color-border:    #000000;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   DENSITY OVERRIDES
+   Applied via data-density attribute on #app-shell.
+───────────────────────────────────────────────────────────────── */
+[data-density="compact"] {
+  --card-padding-default: var(--card-padding-compact);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   PANEL VISIBILITY
+   Driven by data-panel-hidden attribute set from UiState.panels.
+   Using display:none here (not Tailwind hidden class) because:
+   - It works across all skins without a safelist
+   - data-panel-hidden is always present; we toggle its value only
+───────────────────────────────────────────────────────────────── */
+[data-panel-hidden="true"] {
+  display: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   BASE LAYER
+───────────────────────────────────────────────────────────────── */
 @layer base {
   html {
-    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    font-family: var(--font-sans);
   }
 
+  /* Consistent focus ring — WCAG 2.4.7 */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-900);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* RTL inputs follow the dir attribute on their ancestor */
   [dir="rtl"] textarea,
-  [dir="rtl"] input {
+  [dir="rtl"] input[type="text"],
+  [dir="rtl"] input[type="password"],
+  [dir="rtl"] input[type="number"] {
     text-align: right;
   }
 }
 
-@layer utilities {
+/* ─────────────────────────────────────────────────────────────────
+   COMPONENT LAYER — semantic class definitions
+   These are the design system primitives that components reference
+   via CLS.* from uiSelectors.ts.
+   Tailwind utilities can still be composed on top in JSX.
+───────────────────────────────────────────────────────────────── */
+@layer components {
+
+  /* ── Card shell ──────────────────────────────────────────────── */
+  .settings-card {
+    border-radius: var(--card-radius);
+    background-color: var(--color-surface);
+    padding: var(--card-padding-default);
+    box-shadow: var(--card-shadow);
+  }
+
+  .settings-card--compact {
+    padding: var(--card-padding-compact);
+  }
+
+  /* ── Card heading ─────────────────────────────────────────────── */
+  .settings-card__heading {
+    font-size: 0.9375rem;       /* ~15px — between sm and base */
+    font-weight: 600;
+    color: #1f2937;             /* gray-800 */
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  /* ── Field primitives ─────────────────────────────────────────── */
+  .field-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #4b5563;   /* gray-600 */
+  }
+
+  .field-caption {
+    font-size: 0.75rem;
+    color: #9ca3af;   /* gray-400 */
+    margin-top: 0.25rem;
+    line-height: 1.4;
+  }
+
+  .field-input,
+  .field-select,
+  .field-textarea {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;   /* rounded-lg */
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 150ms ease;
+    background-color: var(--color-surface);
+  }
+
+  .field-input:focus,
+  .field-select:focus,
+  .field-textarea:focus {
+    border-color: var(--color-border-focus);
+  }
+
+  .field-range {
+    width: 100%;
+    accent-color: var(--color-brand-900);
+  }
+
+  /* ── Toggle switch (accessible) ───────────────────────────────── */
+  /*
+   * Usage in JSX:
+   *   <button
+   *     role="switch"
+   *     aria-checked={value}
+   *     data-checked={String(value)}
+   *     className="toggle-switch"
+   *     onClick={...}
+   *   >
+   *     <span className="toggle-switch__track">
+   *       <span className="toggle-switch__thumb" />
+   *     </span>
+   *     <span className="sr-only">{label}</span>
+   *   </button>
+   */
+  .toggle-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  .toggle-switch__track {
+    position: relative;
+    width: 2.75rem;    /* w-11 */
+    height: 1.5rem;    /* h-6 */
+    border-radius: 9999px;
+    background-color: #d1d5db;  /* gray-300 = off state */
+    transition: background-color 200ms ease;
+    flex-shrink: 0;
+  }
+
+  /* ON state: button has data-checked="true" */
+  .toggle-switch[data-checked="true"] .toggle-switch__track {
+    background-color: var(--color-brand-900);
+  }
+
+  .toggle-switch__thumb {
+    position: absolute;
+    top: 0.25rem;     /* top-1 */
+    left: 0.25rem;    /* left-1 */
+    width: 1rem;      /* w-4 */
+    height: 1rem;     /* h-4 */
+    border-radius: 9999px;
+    background-color: white;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+    transition: transform 200ms ease;
+  }
+
+  .toggle-switch[data-checked="true"] .toggle-switch__thumb {
+    transform: translateX(1.25rem);  /* slide right */
+  }
+
+  /* ── Segmented buttons ──────────────────────────────────────────── */
+  .segment-group {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .segment-button {
+    flex: 1;
+    padding: 0.375rem 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: #6b7280;   /* gray-500 */
+    cursor: pointer;
+    transition: all 150ms ease;
+  }
+
+  .segment-button[data-selected="true"] {
+    background-color: var(--color-brand-900);
+    color: white;
+    border-color: var(--color-brand-900);
+  }
+
+  .segment-button:hover:not([data-selected="true"]) {
+    border-color: var(--color-brand-900);
+  }
+
+  /* ── Status banners ───────────────────────────────────────────── */
+  .status-banner {
+    border-radius: 0.5rem;
+    padding: 1rem;
+    font-size: 0.875rem;
+    border-width: 1px;
+    border-style: solid;
+  }
+
+  .status-banner--warn {
+    background-color: var(--color-warn-bg);
+    border-color: var(--color-warn-border);
+    color: var(--color-warn-text);
+  }
+
+  .status-banner--error {
+    background-color: var(--color-error-bg);
+    border-color: var(--color-error-border);
+    color: var(--color-error-text);
+  }
+
+  .status-banner--ok {
+    background-color: var(--color-ok-bg);
+    border-color: var(--color-ok-border);
+    color: var(--color-ok-text);
+  }
+
+  /* ── Action buttons ───────────────────────────────────────────── */
+  .action-button--primary {
+    width: 100%;
+    padding: 0.875rem;
+    background-color: var(--color-brand-900);
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: var(--card-radius);
+    border: none;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+  }
+
+  .action-button--primary:hover:not(:disabled) {
+    background-color: var(--color-brand-800);
+  }
+
+  .action-button--primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .action-button--secondary {
+    padding: 0.5rem 1rem;
+    background-color: var(--color-brand-900);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+  }
+
+  .action-button--secondary:hover:not(:disabled) {
+    background-color: var(--color-brand-800);
+  }
+
+  .action-button--secondary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .action-button--ghost {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.75rem;
+    color: #9ca3af;   /* gray-400 */
+    cursor: pointer;
+    font-weight: 600;
+    transition: color 150ms ease;
+  }
+
+  .action-button--ghost:hover {
+    color: #4b5563;   /* gray-600 */
+  }
+
+  /* ── Tab navigation ────────────────────────────────────────────── */
+  .app-tab-bar {
+    display: flex;
+    background-color: var(--color-surface);
+    border-radius: 0.75rem 0.75rem 0 0;
+    box-shadow: var(--card-shadow);
+    border-bottom: 1px solid var(--color-border);
+    overflow: hidden;
+  }
+
+  .tab-button {
+    flex: 1;
+    padding: 0.625rem 0.25rem;   /* reduced from py-3 → py-2.5 */
+    font-size: 0.8125rem;        /* 13px — up from xs/12px */
+    font-weight: 600;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: #9ca3af;   /* gray-400 inactive */
+    cursor: pointer;
+    transition: color 150ms ease, border-color 150ms ease;
+    position: relative;
+  }
+
+  .tab-button:hover:not(.tab-button--active) {
+    color: #6b7280;   /* gray-500 */
+  }
+
+  .tab-button--active {
+    border-bottom-color: var(--color-brand-900);
+    color: var(--color-brand-900);
+  }
+
+  /* ── Result cards ─────────────────────────────────────────────── */
+  .result-card {
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-border);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background-color: var(--color-surface);
+  }
+
+  .result-card--flagged {
+    background-color: var(--color-warn-bg);
+    border-color: var(--color-warn-border);
+  }
+
+  /* ── Stats grid ───────────────────────────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .stats-cell {
+    background-color: var(--color-surface-soft);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    text-align: center;
+  }
+
+  /* ── Arabic text utility (preserved + enhanced) ───────────────── */
   .arabic-text {
-    font-family: "Arabic Typesetting", "Amiri", "Traditional Arabic", serif;
-    font-size: 1.2rem;
-    line-height: 2;
+    font-family: var(--font-arabic);
+    font-size: 1.1rem;    /* slightly tighter than original 1.2rem */
+    line-height: 1.9;
     direction: rtl;
+    unicode-bidi: embed;
+  }
+
+  /* ── Skin swatch (used in UiTab) ─────────────────────────────── */
+  .skin-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 2px solid transparent;
+    cursor: pointer;
+    background: none;
+    width: 100%;
+    text-align: left;
+    transition: border-color 150ms ease;
+  }
+
+  .skin-option[data-selected="true"] {
+    border-color: var(--color-brand-900);
+    background-color: var(--color-brand-100);
+  }
+
+  .skin-option:hover:not([data-selected="true"]) {
+    border-color: var(--color-border);
+    background-color: var(--color-surface-soft);
+  }
+
+  .skin-option__swatch {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.375rem;
+    flex-shrink: 0;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   UTILITIES LAYER — single-purpose additions
+───────────────────────────────────────────────────────────────── */
+@layer utilities {
+  /* Screen-reader-only text */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
 }

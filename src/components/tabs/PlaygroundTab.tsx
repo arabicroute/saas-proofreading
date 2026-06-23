@@ -9,6 +9,7 @@ import { assembleSystemPrompt } from "../../lib/promptAssembler";
 import { callCohere } from "../../lib/cohereClient";
 import { wrapChunk } from "../../lib/chunker";
 import type { CohereMessage } from "../../types/cohere";
+import { CLS, IDS } from "../../lib/uiSelectors";
 
 export function PlaygroundTab() {
   const state    = useAppState();
@@ -86,13 +87,13 @@ export function PlaygroundTab() {
   }[saveStatus];
 
   return (
-    <div className="space-y-4">
+    <div id={IDS.tabPanel("playground")} className="space-y-4">
       <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-700">
         🛠 Dev mode only — this tab is stripped from production builds.
       </div>
 
       {/* System prompt editor */}
-      <div className="rounded-xl bg-white p-5 shadow-sm">
+      <div id={IDS.settingsCard("playground-prompt")} className={CLS.settingsCard}>
         <h3 className="font-bold text-gray-800 mb-2 border-b pb-2">📝 System Prompt Editor</h3>
         <p className="text-xs text-gray-400 mb-2">
           Edits are held in-memory and used for all subsequent requests this session.
@@ -103,22 +104,26 @@ export function PlaygroundTab() {
           value={localPrompt}
           onChange={e => setLocalPrompt(e.target.value)}
           rows={16}
-          className="w-full border rounded-lg px-3 py-2 text-sm arabic-text outline-none
-                     focus:border-[#1c2b4a] resize-y font-mono"
+          className={`${CLS.fieldTextarea} arabic-text resize-y font-mono`}
         />
         <div className="flex gap-2 mt-2">
           <button
             onClick={handleSavePrompt}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-colors
-              ${saveStatus === "saved"  ? "bg-green-100 text-green-700 border-green-300" : ""}
-              ${saveStatus === "error"  ? "bg-red-100 text-red-600 border-red-300"       : ""}
-              ${saveStatus === "idle" || saveStatus === "saving" ? "bg-[#1c2b4a] text-white border-[#1c2b4a]" : ""}`}
+            className={`${CLS.actionSecondary} ${
+              saveStatus === "saved"
+                ? "bg-green-100 text-green-700"
+                : saveStatus === "error"
+                  ? "bg-red-100 text-red-600"
+                  : ""
+            }`}
+            type="button"
           >
             {saveLabel}
           </button>
           <button
             onClick={() => setLocalPrompt(getSystemPrompt())}
-            className="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-300 hover:border-gray-500"
+            className={CLS.actionSecondary}
+            type="button"
           >
             ↺ Reset to file
           </button>
@@ -126,7 +131,7 @@ export function PlaygroundTab() {
       </div>
 
       {/* Single-chunk test runner */}
-      <div className="rounded-xl bg-white p-5 shadow-sm">
+      <div id={IDS.settingsCard("playground-runner")} className={CLS.settingsCard}>
         <h3 className="font-bold text-gray-800 mb-2 border-b pb-2">🧪 Single-Chunk Test Runner</h3>
         <textarea
           dir="rtl"
@@ -134,14 +139,14 @@ export function PlaygroundTab() {
           onChange={e => setTestChunk(e.target.value)}
           rows={4}
           placeholder="أدخل مقطعاً نصياً للاختبار السريع…"
-          className="w-full border rounded-lg px-3 py-2 arabic-text outline-none
-                     focus:border-[#1c2b4a] resize-y mb-2"
+          className={`${CLS.fieldTextarea} arabic-text mb-2 resize-y`}
         />
         <button
+          id="action-playground-run"
           onClick={handleTestRun}
           disabled={!testChunk.trim() || !apiKey || sending}
-          className="bg-[#1c2b4a] text-white rounded-lg px-4 py-2 text-sm font-semibold
-                     disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#2d3f6b] transition-colors"
+          className={`${CLS.actionPrimary} w-auto px-4 py-2 text-sm`}
+          type="button"
         >
           {sending ? "⏳ Running…" : "▶ Run Test"}
         </button>
@@ -149,7 +154,7 @@ export function PlaygroundTab() {
 
       {/* Raw request/response inspector */}
       {(rawRequest || rawResponse) && (
-        <div className="rounded-xl bg-white p-5 shadow-sm space-y-3">
+        <div id={IDS.settingsCard("playground-inspector")} className={`${CLS.settingsCard} space-y-3`}>
           <h3 className="font-bold text-gray-800 border-b pb-2">🔍 Request / Response Inspector</h3>
           {rawRequest && (
             <div>

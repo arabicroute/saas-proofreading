@@ -1,7 +1,10 @@
+
+// src/components/tabs/InputTab.tsx
 import { useRef } from "react";
 import { useAppState, useAppDispatch } from "../../context/AppContext";
 import { runProofreadingSession } from "../../lib/proofreadingSession";
 import { ChunkProgressList } from "../shared/ChunkProgressList";
+import { CLS, IDS } from "../../lib/uiSelectors";
 
 export function InputTab() {
   const state    = useAppState();
@@ -14,7 +17,8 @@ export function InputTab() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = ev => dispatch({ type: "SET_INPUT", text: String(ev.target?.result ?? ""), fileName: file.name });
+    reader.onload = ev =>
+      dispatch({ type: "SET_INPUT", text: String(ev.target?.result ?? ""), fileName: file.name });
     reader.readAsText(file);
   };
 
@@ -23,14 +27,11 @@ export function InputTab() {
     dispatch({ type: "SESSION_START" });
     try {
       const result = await runProofreadingSession({
-        text: inputText,
-        apiKey,
-        cfg,
-        promptOverride,
+        text: inputText, apiKey, cfg, promptOverride,
         onProgress: p => dispatch({ type: "SESSION_PROGRESS", progress: p }),
       });
-      dispatch({ type: "SESSION_DONE", result: result.merged });
-      dispatch({ type: "SET_TAB", tab: "output" });
+      dispatch({ type: "SESSION_DONE",  result: result.merged });
+      dispatch({ type: "SET_TAB",       tab: "output" });
     } catch (e: unknown) {
       dispatch({ type: "SESSION_ERROR", message: String((e as Error).message) });
     }
@@ -40,59 +41,85 @@ export function InputTab() {
 
   return (
     <div className="space-y-4">
+
+      {/* No API key warning */}
       {!apiKey && (
-        <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-700">
-          ⚠ No client-side API key is set. That is fine if the local proxy has `COHERE_API_KEY` configured server-side.
+        <div id={IDS.banner("no-api-key")} className={CLS.statusBannerWarn}>
+          <span aria-hidden="true">⚠ </span>
+          No client-side API key is set. That is fine if the local proxy
+          has <code>COHERE_API_KEY</code> configured server-side.
         </div>
       )}
 
-      <div className="rounded-xl bg-white p-5 shadow-sm">
-        <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">✏ Arabic Text</h3>
+      {/* Text input card */}
+      <div
+        id={IDS.settingsCard("arabic-input")}
+        className={CLS.settingsCard}
+      >
+        <h3 className="settings-card__heading">
+          <span aria-hidden="true">✏ </span>Arabic Text
+        </h3>
         <textarea
+          id="input-arabic-text"
           dir="rtl"
           value={inputText}
           onChange={e => dispatch({ type: "SET_INPUT", text: e.target.value })}
           placeholder="أدخل النص العربي هنا للتدقيق اللغوي…"
           rows={10}
-          className="w-full border rounded-lg px-3 py-2 arabic-text outline-none
-                     focus:border-[#1c2b4a] resize-y"
+          aria-label="Arabic text to proofread"
+          className={`${CLS.fieldTextarea} arabic-text resize-y`}
         />
-        <div className="flex items-center gap-3 mt-2 flex-wrap">
-          <span className="text-xs text-gray-400">{inputText.length.toLocaleString()} characters</span>
+        <div className="flex items-center gap-3 mt-2 flex-wrap" dir="ltr">
+          <span className={`${CLS.fieldCaption} m-0`}>
+            {inputText.length.toLocaleString()} characters
+          </span>
           <button
+            className="text-xs border border-gray-300 rounded-lg px-3 py-1.5
+                       hover:border-gray-500 transition-colors"
             onClick={() => fileRef.current?.click()}
-            className="text-xs border border-gray-300 rounded-lg px-3 py-1.5 hover:border-gray-500 transition-colors"
           >
             Upload .txt
           </button>
-          {inputFileName && <span className="text-xs text-green-600">✓ {inputFileName}</span>}
+          {inputFileName && (
+            <span className="text-xs text-green-600">✓ {inputFileName}</span>
+          )}
           <button
+            className={CLS.actionGhost}
             onClick={() => dispatch({ type: "SET_INPUT", text: "" })}
-            className="text-xs text-red-400 hover:text-red-600"
           >
             Clear
           </button>
         </div>
-        <input type="file" accept=".txt,.text" ref={fileRef} onChange={handleFile} className="hidden" />
+        <input
+          type="file"
+          accept=".txt,.text"
+          ref={fileRef}
+          onChange={handleFile}
+          className="hidden"
+          aria-hidden="true"
+        />
       </div>
 
+      {/* Session error */}
       {sessionError && (
-        <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-600">
-          ⚠ {sessionError}
+        <div id={IDS.banner("session-error")} className={CLS.statusBannerError}>
+          <span aria-hidden="true">⚠ </span>{sessionError}
         </div>
       )}
 
+      {/* Primary action */}
       <button
+        id={IDS.actionStartProofreading}
+        className={CLS.actionPrimary}
         onClick={handleSubmit}
         disabled={!canSubmit}
-        className="w-full py-3.5 bg-[#1c2b4a] text-white font-bold text-lg rounded-xl
-                   disabled:opacity-40 disabled:cursor-not-allowed
-                   hover:bg-[#2d3f6b] transition-colors"
+        aria-busy={running}
       >
         {running ? "⏳ Proofreading in progress…" : "▶ Start Proofreading"}
       </button>
 
       <ChunkProgressList progress={progress} />
+
     </div>
   );
 }
