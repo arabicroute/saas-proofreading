@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useReducer, type Dispatch } from "react";
+import React, { createContext, useContext, useEffect, useReducer, type Dispatch } from "react";
 import type { FeatureConfig } from "../types/featureConfig";
 import type { MergedResult } from "../types/recommendation";
 import type { ChunkProgress } from "../lib/proofreadingSession";
 import { TESTING_DEFAULTS, isFeatureConfigFieldEditable } from "../config/featureConfig";
-import { UI_DEFAULTS } from "../config/uiConfig";
+import { UI_DEFAULTS, loadStoredUiPrefs, saveUiPrefs } from "../config/uiConfig";
 import type { PanelId, UiDirOverride, UiState } from "../types/uiConfig";
 
 export type AppTab = "config" | "input" | "output" | "playground";
@@ -128,7 +128,7 @@ const initialState: AppState = {
   sessionError: "",
   activeTab: "config",
   promptOverride: undefined,
-  ui: UI_DEFAULTS,
+  ui: loadStoredUiPrefs(),
 };
 
 const StateCtx = createContext<AppState>(initialState);
@@ -136,6 +136,11 @@ const DispatchCtx = createContext<Dispatch<AppAction>>(() => undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
+
+  useEffect(() => {
+    saveUiPrefs(state.ui);
+  }, [state.ui]);
+
   return (
     <StateCtx.Provider value={state}>
       <DispatchCtx.Provider value={dispatch}>{children}</DispatchCtx.Provider>
