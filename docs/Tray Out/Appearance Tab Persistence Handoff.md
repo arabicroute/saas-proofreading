@@ -2,15 +2,15 @@
 
 ## Affected Files
 
-Full repo paths for the co-programmer:
+GitHub paths for the co-programmer:
 
-- `e:\laragon\www\cohere-proofreader\src\context\AppContext.tsx`
-- `e:\laragon\www\cohere-proofreader\src\config\uiConfig.ts`
-- `e:\laragon\www\cohere-proofreader\src\types\uiConfig.ts`
-- `e:\laragon\www\cohere-proofreader\src\components\tabs\UiTab.tsx`
-- `e:\laragon\www\cohere-proofreader\src\App.tsx`
-- `e:\laragon\www\cohere-proofreader\src\index.css`
-- `e:\laragon\www\cohere-proofreader\docs\Tray Out\Appearance Tab Persistence Handoff.md`
+- `https://github.com/arabicroute/saas-proofreading/tree/main/src/context/AppContext.tsx`
+- `https://github.com/arabicroute/saas-proofreading/tree/main/src/config/uiConfig.ts`
+- `https://github.com/arabicroute/saas-proofreading/tree/main/src/types/uiConfig.ts`
+- `https://github.com/arabicroute/saas-proofreading/tree/main/src/components/tabs/UiTab.tsx`
+- `https://github.com/arabicroute/saas-proofreading/tree/main/src/App.tsx`
+- `https://github.com/arabicroute/saas-proofreading/tree/main/src/index.css`
+- `https://github.com/arabicroute/saas-proofreading/tree/main/docs/Tray%20Out/Appearance%20Tab%20Persistence%20Handoff.md`
 
 ## Objective
 
